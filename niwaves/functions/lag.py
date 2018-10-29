@@ -190,40 +190,6 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
 
     return lag, peak
 
-"""
-function [peak_lag, peak_cov] = parabolic_interp2(lcc,tr)
-    s = size(lcc);
-    peak_lag = zeros([1,s(1)*s(2)])*NaN;
-    peak_cov = peak_lag;
-    
-    lcc = reshape(lcc,[ s(1)*s(2) s(3)])';
-    
-    %mreshape = reshape(1:(s(1)*s(2)),[s(1), s(2)]);
-    %mreshape = reshape(tril(mreshape,-1),[s(1)*s(1) 1]);
-
-    [~ , I ]= max( bsxfun(@times,lcc,sign(lcc((s(3)+1)/2,:))),[],1);
-    use = find(I ~= 1 & I ~= s(3));
-    lcc = lcc(:,use);
-    %setting up x
-    x0 = I(use) - (s(3)+1)/2 ;
-
-    %setting up y
-    i = sub2ind([size(lcc),numel(use)], I(use), 1:numel(use));
-    lcc = [lcc(i-1);lcc(i);lcc(i+1)];
-
-        
-    a2 = (lcc(3,:) + lcc(1,:) - 2*lcc(2,:))/2;
-    a1 = (lcc(3,:) - lcc(1,:))/2;
-    peak_lag(use) =  (-a1./(2 * a2));
-    peak_cov(use) = a2.*(peak_lag(use).^2) + a1.*peak_lag(use) + lcc(2,:);
-    peak_lag(use) = (peak_lag(use) + x0)*tr;
-
-    peak_lag = reshape(peak_lag,[s(1) s(2)]);
-    peak_cov = reshape(peak_cov,[s(1) s(2)]);
-    
-end
-"""
-
 
 def tmask_blocks(tmask, min_block=0, sample_time=1):
     """
