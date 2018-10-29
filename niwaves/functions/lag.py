@@ -9,11 +9,73 @@ Functions for computing lag matrices following Mitra et al.
 
 import numpy as np
 
-def lag_analysis():
-    pass
 
-def corrcoef_lagged(timeseries1, timeseries2, lagmax=5, tmask=None):
-    """Compute the lagged correlation between two sets of time series.
+def lag_analysis(timeseries1, timeseries2, tmask,
+                 lagmax=5, min_block=0, sample_time=1):
+    """
+    Perform a lag analysis on a single subject by identifying valid epochs
+    and computing a correlation weighted by the number of frames in each
+    epoch.
+
+    Parameters
+    ----------
+    timeseries1
+        First set of time series.
+    timeseries2
+        Second set of time series.
+    tmask
+        Temporal mask indicating frames of the input time series that should
+        be considered in the lag computation.
+    lagmax
+        Maximum lag to consider, in the units of sample_time.
+    min_block
+        The minimum length of a block, in the same units as sample_time.
+        If sample_time is not set explicitly, then this is measured in
+        samples. If min_block is not set, then all blocks of valid data
+        will be returned.
+    sample_time
+        The sampling interval of the data.
+
+    Outputs
+    -------
+    lag
+        The temporal lag (in the same units as sample_time) at which the
+        input time series has an extremum.
+    peak
+        The peak value estimated using parabolic interpolation.
+    """
+    lags = np.arange(-lagmax, lagmax+1, 1)
+    blocks = tmask_blocks(tmask=tmask,
+                          min_block=min_block,
+                          sample_time=sample_time)
+    corr = np.zeros(timeseries1.shape[1]. timeseries2.shape[1], 2*lagmax+1)
+    for block in blocks:
+        tmask_block = np.zeros_like(tmask)
+        tmask_block[block] = 1
+        corr_lag = corrcoef_lagged(timeseries1=timeseries1,
+                                   timeseries2=timeseries2,
+                                   tmask=tmask_block,
+                                   lagmax=lagmax,
+                                   sample_time=sample_time)
+        for i, l in enumerate(lags):
+            corr_lag[:,:,i] = corr_lag[:,:,i] * (len(block) - abs(l))
+        corr = corr + corr_lag
+
+    nframes = sum([len(b) for b in blocks])
+    nblocks = len(blocks)
+    for i, l in enumerate(lags):
+        corr[:,:,i] = corr[:,:,i]/(nframes - abs(l)*nblocks)
+
+    lags, peaks = parabolic_interpolation(timeseries=corr,
+                                          sample_time=sample_time,
+                                          criterion='midpoint')
+    return lags, peaks
+
+
+def corrcoef_lagged(timeseries1, timeseries2, tmask,
+                    lagmax=5, sample_time=1):
+    """
+    Compute the lagged correlation between two sets of time series.
    
     
     Parameters
@@ -22,11 +84,13 @@ def corrcoef_lagged(timeseries1, timeseries2, lagmax=5, tmask=None):
         First set of time series.
     timeseries2
         Second set of time series.
-    lagmax
-        Maximum lag to consider, in frames.
     tmask
         Temporal mask indicating frames of the input time series that should
         be considered in the lag computation.
+    lagmax
+        Maximum lag to consider, in the units of sample_time.
+    sample_time
+        The sampling interval of the data.
 
     Outputs
     -------
@@ -34,6 +98,7 @@ def corrcoef_lagged(timeseries1, timeseries2, lagmax=5, tmask=None):
         Lagged correlation matrix with dimensions
         len(timeseries1) x len(timeseries2) x (2*lagmax+1)
     """
+    lagmax = np.ceil(lagmax*sample_time)
     corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
 
     for k, t in enumerate(np.arange(-lagmax, lagmax+1, 1)):
@@ -58,6 +123,7 @@ def corrcoef_lagged(timeseries1, timeseries2, lagmax=5, tmask=None):
                                                 :ts2_lagged.shape[1]]
 
     return corr
+
 
 def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     """Use parabolic interpolation to estimate the time at which an input
@@ -90,6 +156,41 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     lag = np.empty_like(timeseries[])
 
     return lag, peak
+
+"""
+function [peak_lag, peak_cov] = parabolic_interp2(lcc,tr)
+    s = size(lcc);
+    peak_lag = zeros([1,s(1)*s(2)])*NaN;
+    peak_cov = peak_lag;
+    
+    lcc = reshape(lcc,[ s(1)*s(2) s(3)])';
+    
+    %mreshape = reshape(1:(s(1)*s(2)),[s(1), s(2)]);
+    %mreshape = reshape(tril(mreshape,-1),[s(1)*s(1) 1]);
+
+    [~ , I ]= max( bsxfun(@times,lcc,sign(lcc((s(3)+1)/2,:))),[],1);
+    use = find(I ~= 1 & I ~= s(3));
+    lcc = lcc(:,use);
+    %setting up x
+    x0 = I(use) - (s(3)+1)/2 ;
+
+    %setting up y
+    i = sub2ind([size(lcc),numel(use)], I(use), 1:numel(use));
+    lcc = [lcc(i-1);lcc(i);lcc(i+1)];
+
+        
+    a2 = (lcc(3,:) + lcc(1,:) - 2*lcc(2,:))/2;
+    a1 = (lcc(3,:) - lcc(1,:))/2;
+    peak_lag(use) =  (-a1./(2 * a2));
+    peak_cov(use) = a2.*(peak_lag(use).^2) + a1.*peak_lag(use) + lcc(2,:);
+    peak_lag(use) = (peak_lag(use) + x0)*tr;
+
+    peak_lag = reshape(peak_lag,[s(1) s(2)]);
+    peak_cov = reshape(peak_cov,[s(1) s(2)]);
+    
+end
+"""
+
 
 def tmask_blocks(tmask, min_block=0, sample_time=1):
     """
@@ -130,39 +231,6 @@ def tmask_blocks(tmask, min_block=0, sample_time=1):
     _check_block_length(block, blocks, min_block, sample_time)
     return blocks
 
-"""
-function [peak_lag, peak_cov] = parabolic_interp2(lcc,tr)
-    s = size(lcc);
-    peak_lag = zeros([1,s(1)*s(2)])*NaN;
-    peak_cov = peak_lag;
-    
-    lcc = reshape(lcc,[ s(1)*s(2) s(3)])';
-    
-    %mreshape = reshape(1:(s(1)*s(2)),[s(1), s(2)]);
-    %mreshape = reshape(tril(mreshape,-1),[s(1)*s(1) 1]);
-
-    [~ , I ]= max( bsxfun(@times,lcc,sign(lcc((s(3)+1)/2,:))),[],1);
-    use = find(I ~= 1 & I ~= s(3));
-    lcc = lcc(:,use);
-    %setting up x
-    x0 = I(use) - (s(3)+1)/2 ;
-
-    %setting up y
-    i = sub2ind([size(lcc),numel(use)], I(use), 1:numel(use));
-    lcc = [lcc(i-1);lcc(i);lcc(i+1)];
-
-        
-    a2 = (lcc(3,:) + lcc(1,:) - 2*lcc(2,:))/2;
-    a1 = (lcc(3,:) - lcc(1,:))/2;
-    peak_lag(use) =  (-a1./(2 * a2));
-    peak_cov(use) = a2.*(peak_lag(use).^2) + a1.*peak_lag(use) + lcc(2,:);
-    peak_lag(use) = (peak_lag(use) + x0)*tr;
-
-    peak_lag = reshape(peak_lag,[s(1) s(2)]);
-    peak_cov = reshape(peak_cov,[s(1) s(2)]);
-    
-end
-"""
 
 """
 Siphoned from https://github.com/astronomerdamo/pydcf/blob/master/dcf.py
