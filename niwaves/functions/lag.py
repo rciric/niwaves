@@ -38,10 +38,10 @@ def lag_analysis(timeseries1, timeseries2, tmask,
 
     Outputs
     -------
-    lag
+    lags
         The temporal lag (in the same units as sample_time) at which the
         input time series has an extremum.
-    peak
+    peaks
         The peak value estimated using parabolic interpolation.
     """
     lags = np.arange(-lagmax, lagmax+1, 1)
@@ -66,9 +66,12 @@ def lag_analysis(timeseries1, timeseries2, tmask,
     for i, l in enumerate(lags):
         corr[:,:,i] = corr[:,:,i]/(nframes - abs(l)*nblocks)
 
+    corr = corr.reshape(-1, corr.shape[-1])
     lags, peaks = parabolic_interpolation(timeseries=corr,
                                           sample_time=sample_time,
                                           criterion='midpoint')
+    lags = lags.reshape(timeseries1.shape[1]. timeseries2.shape[1])
+    peaks = peaks.reshape(timeseries1.shape[1]. timeseries2.shape[1])
     return lags, peaks
 
 
