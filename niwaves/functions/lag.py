@@ -156,7 +156,38 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     peak
         The peak value estimated using parabolic interpolation.
     """
-    lag = np.empty_like(timeseries[])
+    lag = np.full_like(timeseries[:,0], np.NaN)
+    peak = np.full_like(timeseries[:,0], np.NaN)
+    if criterion == 'maximum':
+        optim = timeseries
+    elif criterion == 'minimum':
+        optim = -timeseries
+    elif criterion == 'extremum':
+        optim = abs(timeseries)
+    elif criterion == 'midpoint':
+        optim = np.expand_dims(np.sign(timeseries[:,timeseries.shape[1]//2])
+                ,1)*timeseries
+    else:
+        raise ValueError('Invalid criterion specified %s' % criterion)
+    maxidx = np.argmax(optim, 1)
+    use = np.where(np.logical_and(maxidx!=0,
+            maxidx!=timeseries.shape[1]-1))[0]
+    ts = timeseries[use,:]
+    maxidx = maxidx[use]
+    shift = maxidx - timeseries.shape[1]//2
+    slices = np.empty([ts.shape[0], 3])
+    for i, x in enumerate(maxidx):
+        slices[i] = ts[(i, [x-1, x, x+1])]
+
+    # Polynomial coefficients
+    a2 = (slices[:,2] + slices[:,0] - 2*slices[:,1])/2
+    a1 = (slices[:,2] - slices[:,0])/2
+    # axis of symmetry
+    lag[use] = -a1 / (2 * a2)
+    # vertex
+    peak[use] = a2 * lag[use]**2 + a1 * lag[use] + slices[:,1]
+    # recentre and convert units
+    lag[use] = (lag[use] - shift)*sample_time
 
     return lag, peak
 
@@ -223,6 +254,7 @@ def tmask_blocks(tmask, min_block=0, sample_time=1):
     def _check_block_length(block, blocks, min_block, sample_time):
         if len(block) * sample_time > min_block:
             blocks.append(block)
+
     blocks = []
     block = []
     for i, t in enumerate(tmask):
