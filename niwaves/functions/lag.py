@@ -101,7 +101,7 @@ def corrcoef_lagged(timeseries1, timeseries2, tmask,
         Lagged correlation matrix with dimensions
         len(timeseries1) x len(timeseries2) x (2*lagmax+1)
     """
-    lagmax = np.ceil(lagmax*sample_time)
+    lagmax = int(np.ceil(lagmax*sample_time))
     corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
 
     for k, t in enumerate(np.arange(-lagmax, lagmax+1, 1)):
@@ -175,9 +175,8 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     ts = timeseries[use,:]
     maxidx = maxidx[use]
     shift = maxidx - timeseries.shape[1]//2
-    slices = np.empty([ts.shape[0], 3])
-    for i, x in enumerate(maxidx):
-        slices[i] = ts[(i, [x-1, x, x+1])]
+    slices = np.take_along_axis(ts,
+             np.array([maxidx-1,maxidx,maxidx+1]).T, axis=1)
 
     # Polynomial coefficients
     a2 = (slices[:,2] + slices[:,0] - 2*slices[:,1])/2
@@ -187,7 +186,7 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     # vertex
     peak[use] = a2 * lag[use]**2 + a1 * lag[use] + slices[:,1]
     # recentre and convert units
-    lag[use] = (lag[use] - shift)*sample_time
+    lag[use] = (lag[use] - shift) * sample_time
 
     return lag, peak
 
