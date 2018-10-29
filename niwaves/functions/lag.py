@@ -59,45 +59,6 @@ def corrcoef_lagged(timeseries1, timeseries2, lagmax=5, tmask=None):
 
     return corr
 
-"""
-function  r = lagged_corr2(Avg1,Avg2,L,F)
-    % a signal time x ROI
-    % L how may lags
-    % F logic array of frames passed QC
-    L1 = size(Avg1,2);
-    L2 = size(Avg2,2);
-    r = single(zeros(L1,L2,2*L+1));
-
-    k = 1;
-    for i = -L:1:L
-        tau = abs(i);
-        if i >=0
-            Avg1_lagged = Avg1(1:(end-tau),:);
-            Avg2_lagged = Avg2((tau+1):end,:);
-        else
-            Avg1_lagged = Avg1((tau+1):end,:);
-            Avg2_lagged = Avg2(1:(end-tau),:); 
-        end
-        f = (F(1:(end-tau)).*F(tau+1:end))==1;
-        Avg1_lagged = Avg1_lagged(f,:);
-        Avg2_lagged = Avg2_lagged(f,:);
-        r(:,:,k) = correl2(Avg1_lagged, Avg2_lagged);
-        k = k+1;
-    end
-
-end
-
-function  r = correl2(a,b)
-    meana = mean(a,1);
-    meanb = mean(b,1);
-    a = bsxfun(@minus,a,meana);
-    b = bsxfun(@minus,b,meanb);
-    maga = sqrt(sum(a.^2,1))';
-    magb = sqrt(sum(b.^2,1));
-    r = a'*b./(maga * magb);
-end
-"""
-
 def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     """Use parabolic interpolation to estimate the time at which an input
     time series has a maximum or minimum.
@@ -126,8 +87,82 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
     peak
         The peak value estimated using parabolic interpolation.
     """
+    lag = np.empty_like(timeseries[])
 
     return lag, peak
+
+def tmask_blocks(tmask, min_block=0, sample_time=1):
+    """
+    Return a list containing the indices of each valid block of a temporal
+    mask.
+
+    Parameters
+    ----------
+    tmask
+        The temporal mask, in which 1 denotes valid observations and 0
+        denotes invalid or missing observations.
+    min_block
+        The minimum length of a block, in the same units as sample_time.
+        If sample_time is not set explicitly, then this is measured in
+        samples. If min_block is not set, then all blocks of valid data
+        will be returned.
+    sample_time
+        The sampling interval of the temporal mask.
+
+    Outputs
+    -------
+    blocks: list
+        A list whose length equals the number of valid blocks in the
+        temporal mask and whose entries are lists of the indices in each
+        block.
+    """
+    def _check_block_length(block, blocks, min_block, sample_time):
+        if len(block) * sample_time > min_block:
+            blocks.append(block)
+    blocks = []
+    block = []
+    for i, t in enumerate(tmask):
+        if t:
+            block.append(i)
+        else:
+            _check_block_length(block, blocks, min_block, sample_time)
+            block = []
+    _check_block_length(block, blocks, min_block, sample_time)
+    return blocks
+
+"""
+function [peak_lag, peak_cov] = parabolic_interp2(lcc,tr)
+    s = size(lcc);
+    peak_lag = zeros([1,s(1)*s(2)])*NaN;
+    peak_cov = peak_lag;
+    
+    lcc = reshape(lcc,[ s(1)*s(2) s(3)])';
+    
+    %mreshape = reshape(1:(s(1)*s(2)),[s(1), s(2)]);
+    %mreshape = reshape(tril(mreshape,-1),[s(1)*s(1) 1]);
+
+    [~ , I ]= max( bsxfun(@times,lcc,sign(lcc((s(3)+1)/2,:))),[],1);
+    use = find(I ~= 1 & I ~= s(3));
+    lcc = lcc(:,use);
+    %setting up x
+    x0 = I(use) - (s(3)+1)/2 ;
+
+    %setting up y
+    i = sub2ind([size(lcc),numel(use)], I(use), 1:numel(use));
+    lcc = [lcc(i-1);lcc(i);lcc(i+1)];
+
+        
+    a2 = (lcc(3,:) + lcc(1,:) - 2*lcc(2,:))/2;
+    a1 = (lcc(3,:) - lcc(1,:))/2;
+    peak_lag(use) =  (-a1./(2 * a2));
+    peak_cov(use) = a2.*(peak_lag(use).^2) + a1.*peak_lag(use) + lcc(2,:);
+    peak_lag(use) = (peak_lag(use) + x0)*tr;
+
+    peak_lag = reshape(peak_lag,[s(1) s(2)]);
+    peak_cov = reshape(peak_cov,[s(1) s(2)]);
+    
+end
+"""
 
 """
 Siphoned from https://github.com/astronomerdamo/pydcf/blob/master/dcf.py
