@@ -54,8 +54,7 @@ def lag_analysis(timeseries1, timeseries2=None, tmask=None,
     blocks = tmask_blocks(tmask=tmask,
                           min_block=min_block,
                           sample_time=sample_time)
-    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1],
-                     2*int(np.ceil(lagmax*sample_time))+1])
+    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
     for block in blocks:
         tmask_block = np.zeros_like(tmask)
         tmask_block[block] = 1
@@ -109,7 +108,6 @@ def corrcoef_lagged(timeseries1, timeseries2, tmask,
         len(timeseries1) x len(timeseries2) x (2*lagmax+1)
     """
     lagmax = int(np.ceil(lagmax*sample_time))
-    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
 
     for k, t in enumerate(np.arange(-lagmax, lagmax+1, 1)):
         tau = abs(t)
@@ -176,7 +174,7 @@ def parabolic_interpolation(timeseries, sample_time, criterion='midpoint'):
                 ,1)*timeseries
     else:
         raise ValueError('Invalid criterion specified %s' % criterion)
-    maxidx = np.argmax(optim, 1)
+    maxidx = np.nanargmax(optim, 1)
     use = np.where(np.logical_and(maxidx!=0,
             maxidx!=timeseries.shape[1]-1))[0]
     ts = timeseries[use,:]
