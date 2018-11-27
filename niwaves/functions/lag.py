@@ -107,7 +107,7 @@ def corrcoef_lagged(timeseries1, timeseries2, tmask,
         Lagged correlation matrix with dimensions
         len(timeseries1) x len(timeseries2) x (2*lagmax+1)
     """
-    lagmax = int(np.ceil(lagmax*sample_time))
+    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
 
     for k, t in enumerate(np.arange(-lagmax, lagmax+1, 1)):
         tau = abs(t)
