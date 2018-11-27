@@ -74,8 +74,8 @@ def lag_analysis(timeseries1, timeseries2=None, tmask=None,
     lags, peaks = parabolic_interpolation(timeseries=corr,
                                           sample_time=sample_time,
                                           criterion='midpoint')
-    lags = lags.reshape(timeseries1.shape[1]. timeseries2.shape[1])
-    peaks = peaks.reshape(timeseries1.shape[1]. timeseries2.shape[1])
+    lags = lags.reshape(timeseries1.shape[1], timeseries2.shape[1])
+    peaks = peaks.reshape(timeseries1.shape[1], timeseries2.shape[1])
     return lags, peaks
 
 
