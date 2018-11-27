@@ -9,6 +9,7 @@ Functions for visualisation.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def lag_sort(lags, community=None, latency='overall', plot=True):
@@ -48,6 +49,9 @@ def lag_sort(lags, community=None, latency='overall', plot=True):
         slc = slc + len(idx)
     lags_sorted = np.take(np.take(lags, sort_idx, axis=0), sort_idx, axis=1)
     if plot:
+    	plt.subplot(1,2,1)
         plt.imshow(lags_sorted, cmap='jet', vmin=-1.5, vmax=1.5)
+        plt.subplot(1,2,2)
+    	sns.kdeplot(lags.flatten(), shade=True);
     else:
         return lags_sorted
