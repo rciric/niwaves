@@ -48,11 +48,14 @@ def lag_analysis(timeseries1, timeseries2=None, tmask=None,
         timeseries2 = timeseries1
     if tmask is None:
         tmask = np.ones(timeseries1.shape[0])
+    else:
+        tmask = np.squeeze(tmask)
     lags = np.arange(-lagmax, lagmax+1, 1)
     blocks = tmask_blocks(tmask=tmask,
                           min_block=min_block,
                           sample_time=sample_time)
-    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
+    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1],
+                     2*int(np.ceil(lagmax*sample_time))+1])
     for block in blocks:
         tmask_block = np.zeros_like(tmask)
         tmask_block[block] = 1
@@ -122,8 +125,8 @@ def corrcoef_lagged(timeseries1, timeseries2, tmask,
             ts1_lagged = timeseries1
             ts2_lagged = timeseries2
             observed = tmask==1
-        ts1_lagged = ts1_lagged[np.squeeze(observed),:]
-        ts2_lagged = ts2_lagged[np.squeeze(observed),:]
+        ts1_lagged = ts1_lagged[observed,:]
+        ts2_lagged = ts2_lagged[observed,:]
         corr[:,:,k] = np.corrcoef(x=ts1_lagged,
                                   y=ts2_lagged,
                                   rowvar=False)[ts1_lagged.shape[1]:,
