@@ -30,8 +30,6 @@ def lag_sort(lags, community=None, latency='overall', plot=True):
     plot
         Indicates that the result should be plotted instead of returned.
     """
-    latency = 'community'
-    plot = True
     if community is None:
         community = np.ones(lags.shape[0])
     sort_idx = np.empty(len(community), dtype='uint32')
