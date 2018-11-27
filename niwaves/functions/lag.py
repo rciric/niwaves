@@ -10,7 +10,7 @@ Functions for computing lag matrices following Mitra et al.
 import numpy as np
 
 
-def lag_analysis(timeseries1, timeseries2, tmask=None,
+def lag_analysis(timeseries1, timeseries2=None, tmask=None,
                  lagmax=5, min_block=0, sample_time=1):
     """
     Perform a lag analysis on a single subject by identifying valid epochs
@@ -44,13 +44,15 @@ def lag_analysis(timeseries1, timeseries2, tmask=None,
     peaks
         The peak value estimated using parabolic interpolation.
     """
+    if timeseries2 is None:
+        timeseries2 = timeseries1
     if tmask is None:
         tmask = np.ones(timeseries1.shape[0])
     lags = np.arange(-lagmax, lagmax+1, 1)
     blocks = tmask_blocks(tmask=tmask,
                           min_block=min_block,
                           sample_time=sample_time)
-    corr = np.zeros(timeseries1.shape[1]. timeseries2.shape[1], 2*lagmax+1)
+    corr = np.zeros([timeseries1.shape[1], timeseries2.shape[1], 2*lagmax+1])
     for block in blocks:
         tmask_block = np.zeros_like(tmask)
         tmask_block[block] = 1
