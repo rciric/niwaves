@@ -122,8 +122,8 @@ def corrcoef_lagged(timeseries1, timeseries2, tmask,
             ts1_lagged = timeseries1
             ts2_lagged = timeseries2
             observed = tmask==1
-        ts1_lagged = ts1_lagged[observed,:]
-        ts2_lagged = ts2_lagged[observed,:]
+        ts1_lagged = ts1_lagged[np.squeeze(observed),:]
+        ts2_lagged = ts2_lagged[np.squeeze(observed),:]
         corr[:,:,k] = np.corrcoef(x=ts1_lagged,
                                   y=ts2_lagged,
                                   rowvar=False)[ts1_lagged.shape[1]:,
