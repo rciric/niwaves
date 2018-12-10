@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def lag_sort(lags, community=None, latency='overall', plot=True):
+def lag_sort(lags, community=None, latency='overall',
+             plot=True, prange=[-1.5, 1.5]):
     """Sort the lag matrix according to community affiliation and latency.
     
     Parameters
@@ -30,6 +31,9 @@ def lag_sort(lags, community=None, latency='overall', plot=True):
         'overall': mean latency within the entire network
     plot
         Indicates that the result should be plotted instead of returned.
+    prange
+        Indicates the range of disciminable values in the image colourmap.
+        Does nothing if `plot` is disabled.
     """
     if community is None:
         community = np.ones(lags.shape[0])
@@ -49,9 +53,74 @@ def lag_sort(lags, community=None, latency='overall', plot=True):
         slc = slc + len(idx)
     lags_sorted = np.take(np.take(lags, sort_idx, axis=0), sort_idx, axis=1)
     if plot:
-        plt.subplot(1,2,1)
-        plt.imshow(lags_sorted, cmap='jet', vmin=-1.5, vmax=1.5)
-        plt.subplot(1,2,2)
-        sns.kdeplot(lags.flatten(), shade=True);
+        f, (p0, p1) = plt.subplots(1,2,
+                                   figsize=(12, 6),
+                                   gridspec_kw = {
+                                        'width_ratios':[1, 1],
+                                        'height_ratios':[1]
+                                        })
+        p0.imshow(lags_sorted, cmap='jet', vmin=prange[0], vmax=prange[1])
+        sns.kdeplot(lags.flatten(), shade=True, ax=p1)
+        p0.set_xticks([]);
+        p0.set_yticks([]);
+        p1.set_yticks([]);
+        p1.xlabel('Time')
+        plt.show()
     else:
         return lags_sorted
+
+
+def simil_plot(simil, within, vmin=0.01, vmax=0.08):
+
+    """Prepare a plot of similarity between vectors.
+    Intended for making figures similar to those in the Gratton MSC paper.
+
+    Parameters
+    ----------
+    simil
+        A correlation or similarity matrix.
+    within
+        Number of nodes in a major grouping.
+    vmin
+        The minimum discriminable value in the plot.
+    vmax
+        The maximum discriminable value in the plot.
+    """
+
+    nodes = simil.shape[0]
+
+    fig_width = 8
+    fig_height = fig_width * nodes/(nodes + 2)
+
+    seskey = np.array(list(range(1,within+1))*10, ndmin=2)
+    subkey = np.array([i for i in range(1,11) for k in range(within)], ndmin=2)
+    keys = np.hstack([subkey.T, (10/within)*seskey.T])
+    f, (p0, p1) = plt.subplots(1,2, 
+                               figsize=(fig_width, fig_height),
+                               gridspec_kw = {'width_ratios':[2, nodes], 'height_ratios':[nodes]})
+    p0.imshow(keys, cmap='jet')
+    p1.imshow(simil,
+              vmin=vmin,
+              vmax=vmax)
+    p0.axis('off')
+
+    # Minor ticks
+    p1.set_xticks(np.arange(-.5, nodes, 1), minor=True)
+    p1.set_yticks(np.arange(-.5, nodes, 1), minor=True)
+    p1.grid(color='w', linestyle=':', linewidth=0.5, which='minor')
+    p1.set_xticks(np.arange(-.5, nodes, within))
+    p1.set_yticks(np.arange(-.5, nodes, within))
+    p1.grid(color='w', linestyle='-', linewidth=1)
+    for tk in p1.yaxis.get_major_ticks()
+        tk.tick1On = False
+        tk.tick2On = False
+        tk.label1On = False
+        tk.label2On = False
+    for tk in p1.xaxis.get_major_ticks():
+        tk.tick1On = False
+        tk.tick2On = False
+        tk.label1On = False
+        tk.label2On = False
+
+    plt.subplots_adjust(wspace=0, hspace=0, left=0, right=1, bottom=0, top=1)
+    plt.show()
