@@ -27,7 +27,7 @@ def lag_analysis(timeseries1, timeseries2=None, tmask=None,
         Temporal mask indicating frames of the input time series that should
         be considered in the lag computation.
     lagmax
-        Maximum lag to consider, in the units of sample_time.
+        Maximum lag to consider, in units of sample steps.
     min_block
         The minimum length of a block, in the same units as sample_time.
         If sample_time is not set explicitly, then this is measured in
