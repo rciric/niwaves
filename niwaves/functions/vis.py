@@ -64,7 +64,7 @@ def lag_sort(lags, community=None, latency='overall',
         p0.set_xticks([]);
         p0.set_yticks([]);
         p1.set_yticks([]);
-        p1.xlabel('Time')
+        p1.set(xlabel='Time')
         plt.show()
     else:
         return lags_sorted

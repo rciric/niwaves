@@ -4,4 +4,4 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
 from .functions.lag import lag_analysis
-from .functions.vis import lag_sort
+from .functions.vis import lag_sort, simil_plot
