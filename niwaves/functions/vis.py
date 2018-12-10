@@ -111,7 +111,7 @@ def simil_plot(simil, within, vmin=0.01, vmax=0.08):
     p1.set_xticks(np.arange(-.5, nodes, within))
     p1.set_yticks(np.arange(-.5, nodes, within))
     p1.grid(color='w', linestyle='-', linewidth=1)
-    for tk in p1.yaxis.get_major_ticks()
+    for tk in p1.yaxis.get_major_ticks():
         tk.tick1On = False
         tk.tick2On = False
         tk.label1On = False
