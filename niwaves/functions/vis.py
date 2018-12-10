@@ -13,7 +13,7 @@ import seaborn as sns
 
 
 def lag_sort(lags, community=None, latency='overall',
-             plot=True, prange=[-1.5, 1.5]):
+             plot=True, vrange=[-1.5, 1.5]):
     """Sort the lag matrix according to community affiliation and latency.
     
     Parameters
@@ -31,7 +31,7 @@ def lag_sort(lags, community=None, latency='overall',
         'overall': mean latency within the entire network
     plot
         Indicates that the result should be plotted instead of returned.
-    prange
+    vrange
         Indicates the range of disciminable values in the image colourmap.
         Does nothing if `plot` is disabled.
     """
@@ -59,7 +59,7 @@ def lag_sort(lags, community=None, latency='overall',
                                         'width_ratios':[1, 1],
                                         'height_ratios':[1]
                                         })
-        p0.imshow(lags_sorted, cmap='jet', vmin=prange[0], vmax=prange[1])
+        p0.imshow(lags_sorted, cmap='jet', vmin=vrange[0], vmax=vrange[1])
         sns.kdeplot(lags.flatten(), shade=True, ax=p1)
         p0.set_xticks([]);
         p0.set_yticks([]);
@@ -81,10 +81,8 @@ def simil_plot(simil, within, vmin=0.01, vmax=0.08):
         A correlation or similarity matrix.
     within
         Number of nodes in a major grouping.
-    vmin
-        The minimum discriminable value in the plot.
-    vmax
-        The maximum discriminable value in the plot.
+    vrange
+        Indicates the range of disciminable values in the image colourmap.
     """
 
     nodes = simil.shape[0]
@@ -100,8 +98,8 @@ def simil_plot(simil, within, vmin=0.01, vmax=0.08):
                                gridspec_kw = {'width_ratios':[2, nodes], 'height_ratios':[nodes]})
     p0.imshow(keys, cmap='jet')
     p1.imshow(simil,
-              vmin=vmin,
-              vmax=vmax)
+              vmin=vrange[0],
+              vmax=vrange[1])
     p0.axis('off')
 
     # Minor ticks
