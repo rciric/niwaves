@@ -70,7 +70,7 @@ def lag_sort(lags, community=None, latency='overall',
         return lags_sorted
 
 
-def simil_plot(simil, within, vmin=0.01, vmax=0.08):
+def simil_plot(simil, within, vrange=[0.01, 0.08]):
 
     """Prepare a plot of similarity between vectors.
     Intended for making figures similar to those in the Gratton MSC paper.
