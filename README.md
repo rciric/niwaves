@@ -19,3 +19,9 @@ On our to-do list (maybe):
 4. [Algebraic topology](https://www.aesizemore.com/network-toolboxes.html)
 
 Central to implementing many of these tools will be operationalising a substitute for the excellent [`genlouvain`](http://netwiki.amath.unc.edu/GenLouvain/GenLouvain). There's a [genlouvain function included](https://github.com/nangongwubu/Python-Version-for-Network-Community-Architecture-Toobox/blob/master/build/lib/ncat.py#L916) in Dr. Shi Gu's Network Community Architecture Toolbox.
+
+## Currently available functions
+
+* `lag_analysis`: Performs lagged correlation analysis following Mitra et al., taking as inputs the time series to be correlated, a temporal mask indicating the time points to be included, and sampling/lag parameters.
+* `lag_sort`: Re-orders lag matrices according to community membership and mean latency. Can additionally plot the re-ordered lag matrix together with a distribution of latencies.
+* `simil_plot`: Plots a similarity matrix between vectors extracted from a sample of subjects at different levels (like session or task) -- for instance the similarity between latency vectors.
